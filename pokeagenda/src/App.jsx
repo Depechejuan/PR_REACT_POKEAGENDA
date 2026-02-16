@@ -4,10 +4,11 @@ import Layout from './Components/Layout.jsx';
 import Header from './Components/Header.jsx';
 import SearchForm from './Components/SearchForm.jsx';
 import PokemonGrid from './Components/PokemonGrid.jsx';
+import Feedback from './Components/Feedback.jsx';
 import { fetchPokemonList } from './services/pokeapi.js';
 
 function App() {
-const [query, setQuery] = useState('');
+	const [query, setQuery] = useState('');
 	const [pokemons, setPokemons] = useState([]);
 	const [status, setStatus] = useState('idle');
 	const [error, setError] = useState(null);
@@ -16,6 +17,7 @@ const [query, setQuery] = useState('');
 		async function loadPokemons() {
 			try {
 				setStatus('loading');
+				setError(null);
 				const data = await fetchPokemonList();
 				setPokemons(data);
 				setStatus('success');
@@ -24,12 +26,12 @@ const [query, setQuery] = useState('');
 				setStatus('error');
 			}
 		}
-
 		loadPokemons();
 	}, []);
 
 	const filteredPokemons = useMemo(() => {
 		const trimmedQuery = query.trim().toLowerCase();
+
 		if (!trimmedQuery) {
 			return pokemons;
 		}
@@ -38,6 +40,8 @@ const [query, setQuery] = useState('');
 			pokemon.name.toLowerCase().includes(trimmedQuery)
 		);
 	}, [pokemons, query]);
+
+	const noResults = status === 'success' && !filteredPokemons.length;
 
 	return (
 		<div className="app">
@@ -48,7 +52,13 @@ const [query, setQuery] = useState('');
 				onChange={setQuery}
 				onReset={() => setQuery('')}
 				/>
-				<PokemonGrid items={filteredPokemons} />
+				<Feedback status={status} errorMessage={error} />
+				{!noResults && <PokemonGrid items={filteredPokemons} />}
+				{noResults && (
+				<p className="empty">
+					No encontramos ningún Pokémon con ese nombre. Intenta con otro.
+				</p>
+				)}
 			</Layout>
 		</div>
 	);
