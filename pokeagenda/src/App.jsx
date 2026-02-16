@@ -1,0 +1,57 @@
+import './App.css';
+import { useEffect, useMemo, useState } from 'react';
+import Layout from './Components/Layout.jsx';
+import Header from './Components/Header.jsx';
+import SearchForm from './Components/SearchForm.jsx';
+import PokemonGrid from './Components/PokemonGrid.jsx';
+import { fetchPokemonList } from './services/pokeapi.js';
+
+function App() {
+const [query, setQuery] = useState('');
+	const [pokemons, setPokemons] = useState([]);
+	const [status, setStatus] = useState('idle');
+	const [error, setError] = useState(null);
+
+	useEffect(() => {
+		async function loadPokemons() {
+			try {
+				setStatus('loading');
+				const data = await fetchPokemonList();
+				setPokemons(data);
+				setStatus('success');
+			} catch (error) {
+				setError(error.message);
+				setStatus('error');
+			}
+		}
+
+		loadPokemons();
+	}, []);
+
+	const filteredPokemons = useMemo(() => {
+		const trimmedQuery = query.trim().toLowerCase();
+		if (!trimmedQuery) {
+			return pokemons;
+		}
+
+		return pokemons.filter((pokemon) =>
+			pokemon.name.toLowerCase().includes(trimmedQuery)
+		);
+	}, [pokemons, query]);
+
+	return (
+		<div className="app">
+			<Layout>
+				<Header />
+				<SearchForm
+				value={query}
+				onChange={setQuery}
+				onReset={() => setQuery('')}
+				/>
+				<PokemonGrid items={filteredPokemons} />
+			</Layout>
+		</div>
+	);
+}
+
+export default App;
